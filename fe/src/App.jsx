@@ -2,6 +2,7 @@ import NavBar from "./components/NavBar";
 import { Outlet } from "react-router-dom";
 import "./App.css";
 import { Box, Container } from "@mui/material";
+import Notification from "./components/Notification";
 
 export default function App() {
   return (
@@ -20,6 +21,7 @@ export default function App() {
         }}
       >
         <Outlet />
+        <Notification />
       </Container>
     </Box>
   );
