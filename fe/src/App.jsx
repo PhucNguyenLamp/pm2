@@ -1,32 +1,26 @@
-import { useState, useEffect } from 'react'
-import './App.css'
-import { socket } from './socket/socket'
-import Map from './components/Map'
+import NavBar from "./components/NavBar";
+import { Outlet } from "react-router-dom";
+import "./App.css";
+import { Box, Container } from "@mui/material";
 
-function App() {
-  const [location, setLocation] = useState({ lat: 0, lon: 0 })
-  const { lat, lon } = location
-  useEffect(() => {
-    const onLocation = (loc) => {
-      setLocation(loc)
-      console.log('Received location:', loc)
-    }
-    socket.on('location', onLocation) // mốt fetch từ database. tạm thời là lấy trực tiếp từ backend luôn
-    return () => {
-      socket.off('location', onLocation)
-    }
-  }, [])
-
+export default function App() {
   return (
-    <main className="map-page">
-      <h1>Current location</h1>
-      <p className="coords">
-        {lat}, {lon}
-      </p>
-
-      <Map lat={lat} lon={lon} />
-    </main>
-  )
+    <Box
+      sx={{
+        backgroundColor: "background.default",
+        display: "flex",
+        flexDirection: "column",
+        minHeight: "100vh",
+      }}
+    >
+      <NavBar />
+      <Container
+        sx={{
+          flex: 1,
+        }}
+      >
+        <Outlet />
+      </Container>
+    </Box>
+  );
 }
-
-export default App
