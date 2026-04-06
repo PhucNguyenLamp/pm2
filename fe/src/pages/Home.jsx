@@ -3,6 +3,7 @@ import { socket } from '@/socket/socket'
 import Map from '@/components/Map'
 import { Box, Typography } from '@mui/material'
 import Controls from '@/components/Controls'
+import toast from 'react-hot-toast'
 
 function Home() {
   // get latest location from db using react query
@@ -31,8 +32,14 @@ function Home() {
       console.log('Received location:', loc)
     }
     socket.on('location', onLocation) // mốt fetch từ database. tạm thời là lấy trực tiếp từ backend luôn
+    const onOutside = () => {
+      toast.error("Child is outside the safety zone!")
+    }
+    socket.on('outside', onOutside)
+
     return () => {
       socket.off('location', onLocation)
+      socket.off('outside', onOutside)
     }
   }, [])
 
