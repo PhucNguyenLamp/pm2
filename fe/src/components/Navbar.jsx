@@ -81,9 +81,9 @@ export default function NavBar() {
                         <MenuItem onClick={() => navigate("/")}>
                             <Typography>Home</Typography>
                         </MenuItem>
-                        <MenuItem onClick={() => navigate("/statistics")}>
+                        {/* <MenuItem onClick={() => navigate("/statistics")}>
                             <Typography>Statistics</Typography>
-                        </MenuItem>
+                        </MenuItem> */}
                         <MenuItem onClick={() => navigate("/logs")}>
                             <Typography>Logs</Typography>
                         </MenuItem>
