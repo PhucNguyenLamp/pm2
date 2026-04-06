@@ -14,6 +14,16 @@ const useLocation = () => {
     })
 }
 
+// update safezone
+const useUpdateSafezone = () => {
+
+}
+
+// trả về các safezones, sau đó hiện lên trên bảng đồ
+const useSafezones = () => {
+    //
+}
+
 // trả lịch sử location để bỏ vào bảng ở /logs
 const useLocationHistory = () => {
     return useQuery({
