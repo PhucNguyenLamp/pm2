@@ -46,7 +46,7 @@ export default function Login() {
     // If success, navigate to home page
     // If fail, show error message
     try {
-      const res = await axios.post("http://localhost:5000/login", {
+      const res = await axios.post("http://localhost:3000/users/login", {
         username: username,
         password: password,
       });
