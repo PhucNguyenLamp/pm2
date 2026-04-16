@@ -1,13 +1,21 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { socket } from '@/socket/socket'
 import Map from '@/components/Map'
 import { Box, Typography } from '@mui/material'
 import Controls from '@/components/Controls'
 import toast from 'react-hot-toast'
-
+import { useLocation, useSafezones } from '@/hooks/useLocation'
+import { useQueryClient } from '@tanstack/react-query'
 function Home() {
+  const queryClient = useQueryClient()
+  const hasHydratedSafezones = useRef(false)
   // get latest location from db using react query
-  const [location, setLocation] = useState({ lat: 0, lon: 0 })
+  // const [location, setLocation] = useState({ lat: 0, lon: 0 })
+  const { data: location = { lat: 0, lon: 0 } } = useLocation();
+  const { data: safezones = { rectangleSafezone: null, circleSafezone: null } } = useSafezones();
+  const rectangleSafezone = safezones.rectangleSafezone
+  const circleSafezone = safezones.circleSafezone
+
   const [mode, setMode] = useState('rectangle')
   const [rectangle, setRectangle] = useState({
     north: '',
@@ -27,19 +35,42 @@ function Home() {
   const { lat, lon } = location
 
   useEffect(() => {
+    if (hasHydratedSafezones.current) {
+      return
+    }
+
+    if (rectangleSafezone || circleSafezone) {
+      if (rectangleSafezone) {
+        setRectangle({
+          north: String(rectangleSafezone.north ?? ''),
+          south: String(rectangleSafezone.south ?? ''),
+          east: String(rectangleSafezone.east ?? ''),
+          west: String(rectangleSafezone.west ?? ''),
+          rotation: Number(rectangleSafezone.rotation) || 0,
+        })
+      }
+
+      if (circleSafezone) {
+        setLandmark((prev) => ({
+          ...prev,
+          lat: String(circleSafezone.lat ?? ''),
+          lon: String(circleSafezone.lon ?? ''),
+          radius: Number(circleSafezone.radius) || prev.radius,
+        }))
+      }
+
+      hasHydratedSafezones.current = true
+    }
+  }, [circleSafezone, rectangleSafezone])
+
+  useEffect(() => {
     const onLocation = (loc) => {
-      setLocation(loc)
-      console.log('Received location:', loc)
+      queryClient.setQueryData(['location'], loc)
     }
-    socket.on('location', onLocation) // mốt fetch từ database. tạm thời là lấy trực tiếp từ backend luôn
-    const onOutside = () => {
-      toast.error("Child is outside the safety zone!")
-    }
-    socket.on('outside', onOutside)
+    socket.on('location', onLocation) // update
 
     return () => {
       socket.off('location', onLocation)
-      socket.off('outside', onOutside)
     }
   }, [])
 

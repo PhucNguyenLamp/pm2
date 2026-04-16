@@ -12,6 +12,7 @@ import {
   ToggleButtonGroup,
   Typography,
 } from '@mui/material'
+import { useCreateCircleSafezone, useCreateRectangleSafezone } from '@/hooks/useLocation'
 
 export default function Controls({
   mode,
@@ -28,8 +29,9 @@ export default function Controls({
     const s = Number(rectangle.south)
     const e = Number(rectangle.east)
     const w = Number(rectangle.west)
+    const r = Number(rectangle.rotation)
 
-    return [n, s, e, w].every(Number.isFinite) && n > s && e > w
+    return [n, s, e, w, r].every(Number.isFinite) && n > s && e > w
   }, [rectangle])
 
   const isLandmarkValid = useMemo(() => {
@@ -48,14 +50,27 @@ export default function Controls({
     }
   }
 
+  const saveRectangle = useCreateRectangleSafezone()
+  const saveCircle = useCreateCircleSafezone()
+
   const handleSave = () => {
     const payload =
       mode === 'rectangle'
-        ? { mode, ...rectangle }
+        ? {
+            mode,
+            ...rectangle,
+            rotation: Number(rectangle.rotation) || 0,
+            // rotate: Number(rectangle.rotation) || 0,
+          }
         : { mode, ...landmark, radius: Number(landmark.radius) }
 
-    // TODO: call your API/socket here
+    // call your API/socket here
     console.log('Saving geofence settings:', payload)
+    if (mode === 'rectangle') {
+      saveRectangle.mutate(payload)
+    } else {
+      saveCircle.mutate(payload)
+    }
   }
 
   return (
@@ -131,6 +146,14 @@ export default function Controls({
                 size="small"
               />
             </Stack>
+            <TextField
+              label="Rotate (degrees)"
+              type="number"
+              value={rectangle.rotation}
+              onChange={(e) => setRectangle((prev) => ({ ...prev, rotation: e.target.value }))}
+              fullWidth
+              size="small"
+            />
             {!isRectangleValid && (
               <Alert severity="info">
                 Enter valid coordinates where North is greater than South and East is greater than West.
