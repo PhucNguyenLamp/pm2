@@ -33,6 +33,7 @@ export default function Notification() {
     useEffect(() => {
         const handler = () => {
             queryClient.invalidateQueries(['insideSafezone']);
+            queryClient.invalidateQueries(['locationHistory']);
         };
 
         socket.on('location', handler);

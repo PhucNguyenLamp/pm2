@@ -24,10 +24,35 @@ export async function startArduino() {
         .catch(error => console.error(error));
 }
 
-function onLocationUpdate(location) {
+async function onLocationUpdate(location) {
     console.log('Location updated:', location);
+    const insideSafezone = await _checkSafezone(location);
+    await createLocation(location.lat, location.lon, insideSafezone);
     sendLocationToClients(location);
-    createLocation(location.lat, location.lon);
+}
+
+export const _checkSafezone = async (location) => {
+    const rectangleSafezone = await getRectangleSafezone();
+    const circleSafezone = await getCircleSafezone();
+
+    const isInsideRectangle = checkInsideRectangleSafezone(location, rectangleSafezone);
+    const isInsideCircle = checkInsideCircleSafezone(location, circleSafezone);
+
+    return isInsideRectangle || isInsideCircle;
+}
+
+export const __checkSafezone = async (location, rectangleSafezone, circleSafezone) => {
+    if (!circleSafezone) {
+        circleSafezone = await getCircleSafezone();
+    }
+    if (!rectangleSafezone) {
+        rectangleSafezone = await getRectangleSafezone();
+    }
+
+    const isInsideRectangle = checkInsideRectangleSafezone(location, rectangleSafezone);
+    const isInsideCircle = checkInsideCircleSafezone(location, circleSafezone);
+
+    return isInsideRectangle || isInsideCircle;
 }
 
 export const checkSafezone = async () => {
@@ -35,15 +60,21 @@ export const checkSafezone = async () => {
     const circleSafezone = await getCircleSafezone();
     const location = await getCurrentLocation();
 
+    console.log('[checkSafezone] location:', { lat: location?.lat, lon: location?.lon });
+    console.log('[checkSafezone] rectangle:', rectangleSafezone);
+    console.log('[checkSafezone] circle:', circleSafezone);
+
     const isInsideRectangle = checkInsideRectangleSafezone(location, rectangleSafezone);
-    // const isInsideRectangle = false;
     const isInsideCircle = checkInsideCircleSafezone(location, circleSafezone);
-    // const isInsideCircle = false;
+
+    console.log('[checkSafezone] isInsideRectangle:', isInsideRectangle, '| isInsideCircle:', isInsideCircle);
 
     return isInsideRectangle || isInsideCircle;
 }
 
 const checkInsideRectangleSafezone = (location, rectangleSafezone) => {
+    if (!rectangleSafezone) return false;
+
     let { north, south, east, west, rotation } = rectangleSafezone;
 
     north = Number(north);
@@ -62,8 +93,11 @@ const checkInsideRectangleSafezone = (location, rectangleSafezone) => {
     const dLat = location.lat - centerLat;
     const dLon = location.lon - centerLon;
 
-    const rotatedLat = dLat * cos - dLon * sin + centerLat;
-    const rotatedLon = dLat * sin + dLon * cos + centerLon;
+    // Rotate in (x=lon, y=lat) space to match the Map UI convention:
+    //   rotateVector(localX=east, localY=north, angleDeg)
+    // We invert the rotation to "un-rotate" the point back to axis-aligned space.
+    const rotatedLon = dLon * cos - dLat * sin + centerLon;
+    const rotatedLat = dLon * sin + dLat * cos + centerLat;
 
     return (
         rotatedLat <= north &&
@@ -74,6 +108,8 @@ const checkInsideRectangleSafezone = (location, rectangleSafezone) => {
 };
 
 const checkInsideCircleSafezone = (location, circleSafezone) => {
+    if (!circleSafezone) return false;
+
     const { lat, lon, radius } = circleSafezone;
 
     const toRad = (deg) => deg * Math.PI / 180;

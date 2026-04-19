@@ -2,10 +2,11 @@ import db from '../db/database.js';
 
 const locationCollection = db.collection('Location');
 
-export const createLocation = async (lat, lon) => {
+export const createLocation = async (lat, lon, insideSafezone) => {
     return await locationCollection.insertOne({
         lat,
         lon,
+        insideSafezone,
         createdAt: new Date()
     });
 };

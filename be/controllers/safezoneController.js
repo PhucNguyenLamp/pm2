@@ -1,7 +1,7 @@
 import { createRectangleSafezone, getRectangleSafezone } from '../models/rectangleSafezoneModel.js';
 import { createCircleSafezone, getCircleSafezone } from '../models/circleSafezoneModel.js';
-import { getCurrentLocation } from '../models/locationModel.js';
-import { checkSafezone } from '../arduinoCloud/client.js';
+import { createLocation, getCurrentLocation } from '../models/locationModel.js';
+import { __checkSafezone, _checkSafezone, checkSafezone } from '../arduinoCloud/client.js';
 
 export const createRectangleSafezoneHandler = async (req, res) => {
     /// the reactangle can be rotated, 
@@ -18,6 +18,10 @@ export const createRectangleSafezoneHandler = async (req, res) => {
     // }
     // save to database
     await createRectangleSafezone(north, south, east, west, rotation);
+    // create new location 
+    const location = await getCurrentLocation();
+    const inside = await _checkSafezone(location)
+    await createLocation(location.lat, location.lon, inside)
     return res.status(201).send({ message: 'Rectangle safezone created' });
 }
 
@@ -28,6 +32,11 @@ export const createCircleSafezoneHandler = async (req, res) => {
     // }
     // save to database
     await createCircleSafezone(lat, lon, radius);
+    // create new location 
+    const location = await getCurrentLocation();
+    const inside = await _checkSafezone(location)
+    await createLocation(location.lat, location.lon, inside)
+    
     return res.status(201).send({ message: 'Circle safezone created' });
 }
 
@@ -35,6 +44,7 @@ export const getSafezonesHandler = async (req, res) => {
     // get latest rectangle safezone and circle safezone
     const rectangleSafezone = await getRectangleSafezone();
     const circleSafezone = await getCircleSafezone();
+    
     return res.status(200).json({ rectangleSafezone, circleSafezone });
 }
 

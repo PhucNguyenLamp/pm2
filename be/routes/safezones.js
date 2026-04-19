@@ -7,5 +7,4 @@ router.get('/', getSafezonesHandler);
 router.post('/circle', createCircleSafezoneHandler);
 router.post('/rectangle', createRectangleSafezoneHandler);
 router.post('/inside', checkSafezoneHandler);
-
 export default router;
