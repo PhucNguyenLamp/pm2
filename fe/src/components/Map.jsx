@@ -1,5 +1,9 @@
 import { Box } from '@mui/material'
 import { useEffect } from 'react'
+import { renderToString } from 'react-dom/server'
+import L from 'leaflet'
+import PersonPinIcon from '@mui/icons-material/PersonPin'
+import RotateRightIcon from '@mui/icons-material/RotateRight'
 import {
     Circle,
     MapContainer,
@@ -14,6 +18,22 @@ import {
 
 const M_PER_DEG_LAT = 110540
 const MIN_HALF_SIDE_M = 5
+
+const personIcon = L.divIcon({
+    html: renderToString(<PersonPinIcon style={{ color: '#d97706', fontSize: '40px', filter: 'drop-shadow(0px 2px 2px rgba(0,0,0,0.4))' }} />),
+    className: '',
+    iconSize: [40, 40],
+    iconAnchor: [20, 40],
+    popupAnchor: [0, -40],
+})
+
+const rotateIcon = L.divIcon({
+    html: renderToString(<RotateRightIcon style={{ color: '#2563eb', fontSize: '28px', backgroundColor: 'white', borderRadius: '50%', boxShadow: '0 2px 4px rgba(0,0,0,0.3)', padding: '2px' }} />),
+    className: '',
+    iconSize: [28, 28],
+    iconAnchor: [14, 14],
+    popupAnchor: [0, -14],
+})
 
 const toRadians = (deg) => (deg * Math.PI) / 180
 const toDegrees = (rad) => (rad * 180) / Math.PI
@@ -216,7 +236,7 @@ export default function Map({
                 />
                 <MapClickSelector onPickPoint={onPickPoint} />
                 <RecenterOnLocation lat={parsedLat} lon={parsedLon} />
-                <Marker position={[parsedLat, parsedLon]}>
+                <Marker position={[parsedLat, parsedLon]} icon={personIcon}>
                     <Popup>Live GPS point</Popup>
                 </Marker>
 
@@ -279,6 +299,7 @@ export default function Map({
                         <Marker
                             position={rectangleVisual.rotateHandle}
                             draggable
+                            icon={rotateIcon}
                             eventHandlers={{
                                 dragend: (event) => {
                                     const dragged = event.target.getLatLng()
