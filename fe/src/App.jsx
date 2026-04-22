@@ -1,4 +1,4 @@
-import NavBar from "./components/NavBar";
+import NavBar from "./components/Navbar";
 import { Outlet } from "react-router-dom";
 import "./App.css";
 import { Box, Container } from "@mui/material";
