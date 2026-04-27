@@ -1,4 +1,5 @@
 import Login from "@/pages/Login";
+import Register from "@/pages/Register";
 import ErrorBoundary from "@/pages/common/errors/ErrorBoundary";
 
 function BrokenComponent() {
@@ -9,6 +10,11 @@ const publicRoutes = [
     {
         path: "login",
         element: <Login />,
+        errorElement: <ErrorBoundary />,
+    },
+    {
+        path: "register",
+        element: <Register />,
         errorElement: <ErrorBoundary />,
     },
     {

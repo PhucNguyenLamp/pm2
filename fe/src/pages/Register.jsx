@@ -1,7 +1,6 @@
 import {
   Avatar,
   Typography,
-  Container,
   Button,
   Box,
   TextField,
@@ -11,69 +10,90 @@ import {
   IconButton,
   Alert,
 } from "@mui/material";
-import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+import PersonAddOutlinedIcon from "@mui/icons-material/PersonAddOutlined";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import CancelOutlinedIcon from "@mui/icons-material/CancelOutlined";
 import { Link, useNavigate } from "react-router-dom";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useState, useMemo } from "react";
 import axios from "axios";
 import { AuthContext } from "@/contexts/AuthContext";
 
-export default function Login() {
+const PASSWORD_RULES = [
+  { label: "At least 8 characters", test: (p) => p.length >= 8 },
+  { label: "One uppercase letter", test: (p) => /[A-Z]/.test(p) },
+  { label: "One lowercase letter", test: (p) => /[a-z]/.test(p) },
+  { label: "One number", test: (p) => /\d/.test(p) },
+  { label: "One special character", test: (p) => /[^A-Za-z0-9]/.test(p) },
+];
+
+export default function Register() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [isLocked, setIsLocked] = useState(false);
+  const [success, setSuccess] = useState("");
   const navigate = useNavigate();
 
-  const { user, setUser } = useContext(AuthContext);
-  useEffect(() => {
-    if (user) {
-      navigate("/");
-    }
-  }, [user]);
+  const { user } = useContext(AuthContext);
+  if (user) {
+    navigate("/");
+  }
 
-  const handleLogin = async () => {
-    if (!username || !password) {
-      setError("Please enter both username and password");
+  const passwordChecks = useMemo(
+    () => PASSWORD_RULES.map((rule) => ({ ...rule, pass: rule.test(password) })),
+    [password]
+  );
+  const allPasswordRulesPassed = passwordChecks.every((r) => r.pass);
+
+  const handleRegister = async () => {
+    setError("");
+    setSuccess("");
+
+    if (!username || !password || !confirmPassword) {
+      setError("Please fill in all fields");
       return;
     }
+    if (username.length < 3 || username.length > 32 || !/^[a-zA-Z0-9_]+$/.test(username)) {
+      setError("Username must be 3-32 characters (letters, numbers, underscores)");
+      return;
+    }
+    if (!allPasswordRulesPassed) {
+      setError("Password does not meet all requirements");
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
     setLoading(true);
-    setError("");
     try {
-      const res = await axios.post("http://localhost:3000/users/login", {
-        username: username,
-        password: password,
+      await axios.post("http://localhost:3000/users/register", {
+        username,
+        password,
       });
-      localStorage.setItem("token", res.data.token);
-      localStorage.setItem("user", res.data.username);
-      setUser(res.data.username);
-      navigate("/");
-    } catch (error) {
-      if (error.response && error.response.status === 429) {
-        setError("Too many login attempts. Please try again after 1 minute.");
-        setIsLocked(true);
-        setTimeout(() => setIsLocked(false), 60000);
+      setSuccess("Account created! Redirecting to login...");
+      setTimeout(() => navigate("/login"), 1500);
+    } catch (err) {
+      if (err.response?.status === 409) {
+        setError("Username already taken. Please choose another.");
+      } else if (err.response?.status === 400) {
+        setError("Invalid username or password format.");
       } else {
-        const remaining = error.response?.headers?.["ratelimit-remaining"];
-        if (remaining !== undefined) {
-          setError(
-            `Login failed, check your username and password. You have ${Number(remaining) + 1} attempts left.`
-          );
-        } else {
-          setError("Login failed, check your username and password");
-        }
+        setError("Registration failed. Please try again later.");
       }
-      console.error(error);
+      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === "Enter") handleLogin();
+    if (e.key === "Enter") handleRegister();
   };
 
   return (
@@ -94,7 +114,7 @@ export default function Login() {
         elevation={8}
         sx={{
           width: "100%",
-          maxWidth: 420,
+          maxWidth: 440,
           p: { xs: 3, sm: 5 },
           borderRadius: 3,
           backdropFilter: "blur(10px)",
@@ -125,7 +145,7 @@ export default function Login() {
                 `0 4px 20px ${theme.palette.mode === "dark" ? "rgba(210, 128, 255, 0.3)" : "rgba(25, 118, 210, 0.3)"}`,
             }}
           >
-            <LockOutlinedIcon sx={{ fontSize: 30, color: (theme) => theme.palette.mode === "dark" ? "#190042" : "#fff" }} />
+            <PersonAddOutlinedIcon sx={{ fontSize: 30, color: (theme) => theme.palette.mode === "dark" ? "#190042" : "#fff" }} />
           </Avatar>
 
           <Typography
@@ -133,10 +153,10 @@ export default function Login() {
             fontWeight={700}
             sx={{ letterSpacing: "-0.02em" }}
           >
-            Welcome Back
+            Create Account
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: -1.5 }}>
-            Sign in to CLMS Dashboard
+            Sign up for CLMS Dashboard
           </Typography>
 
           {error && (
@@ -144,12 +164,17 @@ export default function Login() {
               {error}
             </Alert>
           )}
+          {success && (
+            <Alert severity="success" sx={{ width: "100%", borderRadius: 2 }}>
+              {success}
+            </Alert>
+          )}
 
           <TextField
             fullWidth
             variant="outlined"
             label="Username"
-            placeholder="Enter your username"
+            placeholder="3-32 characters (letters, numbers, _)"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -161,12 +186,12 @@ export default function Login() {
             fullWidth
             variant="outlined"
             label="Password"
-            placeholder="Enter your password"
+            placeholder="Enter a strong password"
             type={showPassword ? "text" : "password"}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             onKeyDown={handleKeyDown}
-            autoComplete="current-password"
+            autoComplete="new-password"
             sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
             InputProps={{
               endAdornment: (
@@ -183,12 +208,66 @@ export default function Login() {
             }}
           />
 
+          {/* Password strength checklist */}
+          {password.length > 0 && (
+            <Box sx={{ width: "100%", pl: 1 }}>
+              {passwordChecks.map((rule) => (
+                <Box
+                  key={rule.label}
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 0.8,
+                    mb: 0.3,
+                  }}
+                >
+                  {rule.pass ? (
+                    <CheckCircleOutlineIcon
+                      sx={{ fontSize: 18, color: "success.main" }}
+                    />
+                  ) : (
+                    <CancelOutlinedIcon
+                      sx={{ fontSize: 18, color: "error.main" }}
+                    />
+                  )}
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: rule.pass ? "success.main" : "text.secondary",
+                    }}
+                  >
+                    {rule.label}
+                  </Typography>
+                </Box>
+              ))}
+            </Box>
+          )}
+
+          <TextField
+            fullWidth
+            variant="outlined"
+            label="Confirm Password"
+            placeholder="Re-enter your password"
+            type={showPassword ? "text" : "password"}
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            onKeyDown={handleKeyDown}
+            autoComplete="new-password"
+            error={confirmPassword.length > 0 && password !== confirmPassword}
+            helperText={
+              confirmPassword.length > 0 && password !== confirmPassword
+                ? "Passwords do not match"
+                : ""
+            }
+            sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
+          />
+
           <Button
             fullWidth
             variant="contained"
             size="large"
-            onClick={handleLogin}
-            disabled={loading || isLocked}
+            onClick={handleRegister}
+            disabled={loading || !!success}
             sx={{
               py: 1.5,
               borderRadius: 2,
@@ -203,17 +282,17 @@ export default function Login() {
               },
             }}
           >
-            {isLocked ? "Locked (Haha)" : loading ? "Signing in..." : "Sign In"}
+            {loading ? "Creating Account..." : "Sign Up"}
           </Button>
 
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-            Don't have an account?{" "}
+            Already have an account?{" "}
             <MuiLink
               component={Link}
-              to="/register"
+              to="/login"
               sx={{ fontWeight: 600, textDecoration: "none" }}
             >
-              Sign Up
+              Sign In
             </MuiLink>
           </Typography>
         </Box>
