@@ -1,18 +1,22 @@
 import { useState, useEffect, useRef } from 'react'
 import { socket } from '@/socket/socket'
 import Map from '@/components/Map'
-import { Box, Typography } from '@mui/material'
+import { Box, Chip, Paper, Stack, Typography } from '@mui/material'
 import Controls from '@/components/Controls'
 import toast from 'react-hot-toast'
-import { useLocation, useSafezones } from '@/hooks/useLocation'
+import { useLocation, useInsideSafezone, useSafezones } from '@/hooks/useLocation'
 import { useQueryClient } from '@tanstack/react-query'
+import LocationOnIcon from '@mui/icons-material/LocationOn'
+import ShieldIcon from '@mui/icons-material/Shield'
+
 function Home() {
   const queryClient = useQueryClient()
   const hasHydratedSafezones = useRef(false)
-  // get latest location from db using react query
-  // const [location, setLocation] = useState({ lat: 0, lon: 0 })
-  const { data: location = { lat: 0, lon: 0 } } = useLocation();
-  const { data: safezones = { rectangleSafezone: null, circleSafezone: null } } = useSafezones();
+
+  const { data: location = { lat: 0, lon: 0 } } = useLocation()
+  const { data: safezones = { rectangleSafezone: null, circleSafezone: null } } = useSafezones()
+  const { data: safezoneStatus = { inside: true } } = useInsideSafezone()
+
   const rectangleSafezone = safezones.rectangleSafezone
   const circleSafezone = safezones.circleSafezone
 
@@ -125,13 +129,56 @@ function Home() {
     setLandmark((prev) => ({ ...prev, ...nextLandmark }))
   }
 
+  const isInside = safezoneStatus.inside
+
   return (
-    <Box component="main" className="flex flex-row gap-2 justify-between" >
-      <Box>
-        <Typography variant="h5" color="text.primary">Current location</Typography>
-        <Typography className="coords" color="text.secondary">
-          {lat}, {lon}
-        </Typography>
+    <Box component="main" sx={{ py: 3 }}>
+      {/* Status Header */}
+      <Paper
+        elevation={0}
+        sx={{
+          mb: 3,
+          p: 2.5,
+          borderRadius: 2,
+          border: '1px solid',
+          borderColor: 'divider',
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          justifyContent: 'space-between',
+          gap: 2,
+        }}
+      >
+        <Stack direction="row" spacing={1.5} alignItems="center">
+          <LocationOnIcon sx={{ color: 'primary.main', fontSize: 28 }} />
+          <Box>
+            <Typography variant="subtitle2" color="text.secondary" sx={{ lineHeight: 1.2 }}>
+              Current Location
+            </Typography>
+            <Typography variant="h6" fontWeight={600} sx={{ fontFamily: 'monospace' }}>
+              {Number(lat).toFixed(6)}, {Number(lon).toFixed(6)}
+            </Typography>
+          </Box>
+        </Stack>
+
+        <Chip
+          icon={<ShieldIcon />}
+          label={isInside ? 'Inside Safe Zone' : 'Outside Safe Zone'}
+          color={isInside ? 'success' : 'error'}
+          variant="outlined"
+          sx={{ fontWeight: 600, fontSize: '0.85rem', py: 2 }}
+        />
+      </Paper>
+
+      {/* Main Content: Controls + Map */}
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', md: 'row' },
+          gap: 3,
+          alignItems: 'flex-start',
+        }}
+      >
         <Controls
           mode={mode}
           setMode={setMode}
@@ -141,18 +188,18 @@ function Home() {
           setLandmark={setLandmark}
           onResetRectangleAnchor={() => setRectangleAnchor(null)}
         />
-      </Box>
 
-      <Map
-        lat={lat}
-        lon={lon}
-        mode={mode}
-        rectangle={rectangle}
-        landmark={landmark}
-        onPickPoint={onMapPickPoint}
-        onRectangleChange={onRectangleChange}
-        onLandmarkChange={onLandmarkChange}
-      />
+        <Map
+          lat={lat}
+          lon={lon}
+          mode={mode}
+          rectangle={rectangle}
+          landmark={landmark}
+          onPickPoint={onMapPickPoint}
+          onRectangleChange={onRectangleChange}
+          onLandmarkChange={onLandmarkChange}
+        />
+      </Box>
     </Box>
   )
 }
