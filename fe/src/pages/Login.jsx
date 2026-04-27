@@ -32,6 +32,7 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [isLocked, setIsLocked] = useState(false);
   const navigate = useNavigate();
 
   const { user, setUser } = useContext(AuthContext);
@@ -55,7 +56,18 @@ export default function Login() {
       setUser(res.data.username);
       navigate("/");
     } catch (error) {
-      setError("Login failed, check your username and password");
+      if (error.response && error.response.status === 429) {
+        setError("Too many login attempts. Please try again after 1 minute.");
+        setIsLocked(true);
+        setTimeout(() => setIsLocked(false), 60000);
+      } else {
+        const remaining = error.response?.headers?.['ratelimit-remaining'];
+        if (remaining !== undefined) {
+           setError(`Login failed, check your username and password. You have ${remaining} attempts left.`);
+        } else {
+           setError("Login failed, check your username and password");
+        }
+      }
       console.error(error);
     } finally {
       setLoading(false);
@@ -115,8 +127,9 @@ export default function Login() {
             minWidth: "200px", // Ensure it doesn't shrink too much
           }}
           onClick={handleLogin}
+          disabled={loading || isLocked}
         >
-          Login
+          {isLocked ? "Locked (Haha)" : "Login"}
         </Button>
         {error && (
           <Typography sx={{ color: "error.main" }}>{error}</Typography>

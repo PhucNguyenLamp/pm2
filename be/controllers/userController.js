@@ -13,9 +13,19 @@ function isValidUsername(username) {
 }
 
 function isValidPassword(password) {
-    return typeof password === "string"
-        && password.length >= 8
-        && password.length <= 64;
+    if (typeof password !== "string" || password.length < 8 || password.length > 64) {
+        return false;
+    }
+    // At least one uppercase letter
+    if (!/[A-Z]/.test(password)) return false;
+    // At least one lowercase letter
+    if (!/[a-z]/.test(password)) return false;
+    // At least one digit
+    if (!/\d/.test(password)) return false;
+    // At least one special character
+    if (!/[^A-Za-z0-9]/.test(password)) return false;
+    
+    return true;
 }
 
 export const registerUser = async (req, res) => {
