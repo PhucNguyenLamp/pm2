@@ -12,7 +12,10 @@ import {
   ToggleButtonGroup,
   Typography,
 } from '@mui/material'
+import SaveIcon from '@mui/icons-material/Save'
+import RestartAltIcon from '@mui/icons-material/RestartAlt'
 import { useCreateCircleSafezone, useCreateRectangleSafezone } from '@/hooks/useLocation'
+import toast from 'react-hot-toast'
 
 export default function Controls({
   mode,
@@ -52,6 +55,7 @@ export default function Controls({
 
   const saveRectangle = useCreateRectangleSafezone()
   const saveCircle = useCreateCircleSafezone()
+  const isSaving = saveRectangle.isPending || saveCircle.isPending
 
   const handleSave = () => {
     const payload =
@@ -60,29 +64,40 @@ export default function Controls({
             mode,
             ...rectangle,
             rotation: Number(rectangle.rotation) || 0,
-            // rotate: Number(rectangle.rotation) || 0,
           }
         : { mode, ...landmark, radius: Number(landmark.radius) }
 
-    // call your API/socket here
     console.log('Saving geofence settings:', payload)
     if (mode === 'rectangle') {
-      saveRectangle.mutate(payload)
+      saveRectangle.mutate(payload, {
+        onSuccess: () => toast.success('Rectangle safe zone saved!'),
+        onError: () => toast.error('Failed to save rectangle safe zone'),
+      })
     } else {
-      saveCircle.mutate(payload)
+      saveCircle.mutate(payload, {
+        onSuccess: () => toast.success('Landmark safe zone saved!'),
+        onError: () => toast.error('Failed to save landmark safe zone'),
+      })
     }
+  }
+
+  const handleReset = () => {
+    setRectangle({ north: '', south: '', east: '', west: '', rotation: 0 })
+    setLandmark({ name: 'home', lat: '', lon: '', radius: 100 })
+    onResetRectangleAnchor?.()
+    toast('Settings reset', { icon: '🔄' })
   }
 
   return (
     <Paper
       elevation={0}
       sx={{
-        mt: 2,
-        p: 2,
+        p: 2.5,
         borderRadius: 2,
         border: '1px solid',
         borderColor: 'divider',
         width: { xs: '100%', md: 420 },
+        flexShrink: 0,
       }}
     >
       <Stack spacing={2}>
@@ -222,19 +237,17 @@ export default function Controls({
           <Button
             variant="contained"
             fullWidth
-            disabled={!canSave}
+            disabled={!canSave || isSaving}
             onClick={handleSave}
+            startIcon={<SaveIcon />}
           >
-            Save settings
+            {isSaving ? 'Saving...' : 'Save Settings'}
           </Button>
           <Button
             variant="outlined"
             fullWidth
-            onClick={() => {
-              setRectangle({ north: '', south: '', east: '', west: '', rotation: 0 })
-              setLandmark({ name: 'home', lat: '', lon: '', radius: 100 })
-              onResetRectangleAnchor?.()
-            }}
+            onClick={handleReset}
+            startIcon={<RestartAltIcon />}
           >
             Reset
           </Button>

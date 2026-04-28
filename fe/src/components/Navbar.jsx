@@ -55,11 +55,6 @@ export default function NavBar() {
                 top: 0,
                 zIndex: 1100,
                 marginBottom: 2,
-                opacity: 0.5,
-                transition: "opacity 0.3s ease-in-out",
-                "&:hover": {
-                    opacity: 1,
-                },
             }}
         >
             <AppBar
@@ -128,13 +123,13 @@ export default function NavBar() {
                         >
                             <MenuItem onClick={() => navigate("/account")}>
                                 <Typography sx={{ textAlign: "center" }}>
-                                    Trang cá nhân
+                                    Profile
                                 </Typography>
                             </MenuItem>
 
                             <MenuItem onClick={handleLogout}>
                                 <Typography sx={{ textAlign: "center" }}>
-                                    Đăng xuất
+                                    Logout
                                 </Typography>
                             </MenuItem>
                         </Menu>

@@ -14,7 +14,7 @@ const useLocation = () => {
     })
 }
 
-// tạo safezone hình chữ nhật
+// Create rectangle safezone
 const useCreateRectangleSafezone = () => {
     const queryClient = useQueryClient()
     return useMutation({
@@ -22,12 +22,13 @@ const useCreateRectangleSafezone = () => {
             await api.post('/safezones/rectangle', rectangle)
         },
         onSuccess: () => {
-            queryClient.invalidateQueries(['insideSafezone'])
+            queryClient.invalidateQueries({ queryKey: ['insideSafezone'] })
+            queryClient.invalidateQueries({ queryKey: ['safezones'] })
         }
     })
 }
 
-// tạo safezone hình tròn
+// Create circle safezone
 const useCreateCircleSafezone = () => {
     const queryClient = useQueryClient()
     return useMutation({
@@ -35,7 +36,8 @@ const useCreateCircleSafezone = () => {
             await api.post('/safezones/circle', circle)
         },
         onSuccess: () => {
-            queryClient.invalidateQueries(['insideSafezone'])
+            queryClient.invalidateQueries({ queryKey: ['insideSafezone'] })
+            queryClient.invalidateQueries({ queryKey: ['safezones'] })
         }
     })
 }

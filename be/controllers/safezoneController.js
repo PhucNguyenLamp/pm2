@@ -8,14 +8,14 @@ export const createRectangleSafezoneHandler = async (req, res) => {
     // north lat, south lat, east lon, west lon, rotation in degree
     const { north, south, east, west, rotation } = req.body;
     // validate input
-    // if (
-    //     !isValidLatitude(north) || !isValidLatitude(south) ||
-    //     !isValidLongitude(east) || !isValidLongitude(west) ||
-    //     typeof rotation !== 'number' 
-    // ) {
-    //     console.log("Invalid rectangle safezone parameters:", { north, south, east, west, rotation });
-    //     return res.status(400).send('Invalid rectangle coordinates');
-    // }
+    if (
+        !isValidLatitude(north) || !isValidLatitude(south) ||
+        !isValidLongitude(east) || !isValidLongitude(west) ||
+        typeof rotation !== 'number' 
+    ) {
+        console.log("Invalid rectangle safezone parameters:", { north, south, east, west, rotation });
+        return res.status(400).send('Invalid rectangle coordinates');
+    }
     // save to database
     await createRectangleSafezone(north, south, east, west, rotation);
     // create new location 
@@ -27,9 +27,9 @@ export const createRectangleSafezoneHandler = async (req, res) => {
 
 export const createCircleSafezoneHandler = async (req, res) => {
     const { lat, lon, radius } = req.body;
-    // if (!isValidLatitude(lat) || !isValidLongitude(lon) || typeof radius !== 'number' || radius <= 0) {
-    //     return res.status(400).send('Invalid circle parameters');
-    // }
+    if (!isValidLatitude(lat) || !isValidLongitude(lon) || typeof radius !== 'number' || radius <= 0) {
+        return res.status(400).send('Invalid circle parameters');
+    }
     // save to database
     await createCircleSafezone(lat, lon, radius);
     // create new location 

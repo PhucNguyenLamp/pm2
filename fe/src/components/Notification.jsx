@@ -26,14 +26,16 @@ export default function Notification() {
                 toast.dismiss(toastIdRef.current);
                 toastIdRef.current = null;
             }
+            // Safety net: dismiss all error toasts in case the ref got stale
+            toast.dismiss();
         }
     }, [inside]);
 
 
     useEffect(() => {
         const handler = () => {
-            queryClient.invalidateQueries(['insideSafezone']);
-            queryClient.invalidateQueries(['locationHistory']);
+            queryClient.invalidateQueries({ queryKey: ['insideSafezone'] });
+            queryClient.invalidateQueries({ queryKey: ['locationHistory'] });
         };
 
         socket.on('location', handler);
