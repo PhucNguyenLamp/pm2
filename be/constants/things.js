@@ -1,4 +1,4 @@
-const thingId = "b05ca836-ac34-48c9-8657-f137f1915275"
+const thingId = "4fffb99a-a93d-45e9-85ea-2aef1d98a483"
 const variableName = "Gps"
 // gps is { "lat": "10.781", "lon": "106.654" }
 
